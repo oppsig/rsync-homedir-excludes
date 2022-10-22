@@ -1,3 +1,4 @@
 *local.txt
 *.backup
-config
+backintime_config_*
+exclude_no_comments
