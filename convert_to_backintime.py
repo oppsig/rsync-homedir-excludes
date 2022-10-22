@@ -1,14 +1,6 @@
 from os import path
 import re
 
-if path.exists("/root/.config/backintime/config"):
-    configfile = "/root/.config/backintime/config"
-else:
-    configfile = path.relpath("./config") # backintime config file
-
-excludefile = path.relpath("./exclude") # exclude file
-profile = 1 # backintime profile
-
 # parse backintime config file.
 def parse_config(config):
     with open(config) as f:
@@ -54,30 +46,63 @@ def parse_config(config):
     for line in final_list:
         pass
         #print(line, end="")
-    
-    # now start creating new backintime config file
+
+    create_file_exclude_no_comments(final_list) 
+    create_file_backintime_new(final_list, config_contents)
+
+def create_file_exclude_no_comments(final_list):
+    with open(exclude_no_comments, 'w', encoding='utf-8') as f:
+        for line in final_list: 
+            f.write(format_exclude_no_comments(line))
+            #f.write('\n')
+
+def create_file_backintime_new(final_list, config_contents):
     has_matched = False
+    tmp = []
+    counter = 1
     for line in config_contents:
         m = re.search("profile[%s].snapshots.exclude.[0-9]+.value=" % profile, line)
         if not m:
-            print(line, end="")
+            tmp.append(line)
         if m and not has_matched:
             has_matched = True
             counter = 1
             for line in final_list:
-                format_exclude(line, counter)
+                value = format_exclude(line, counter)
                 counter += 1
+                tmp.append(value)
+    with open(backintime_config_new, 'w', encoding='utf-8') as f:
+        for line in tmp:
+            f.write(line)
+            #f.write('\n')
 
 def format_exclude(line, counter):
     if not re.search("^($|[:space:]*#)", line) and not re.search("^([/])", line): 
         value = f"profile{profile}.snapshots.exclude.{counter}.value=/home/*/{line}"
     if re.search("^([/].*)", line):
         value = f"profile{profile}.snapshots.exclude.{counter}.value={line}"
+    return value
 
-    print(value, end="")
-
-
+def format_exclude_no_comments(line):
+    if not re.search("^($|[:space:]*#)", line) and not re.search("^([/])", line): 
+        value = f"/home/*/{line}"
+    if re.search("^([/].*)", line):
+        value = f"{line}"
+    return value
 
 
 if __name__ == "__main__":
+    backintime_config_root = "/root/.config/backintime/config"
+    backintime_config_old = "./backintime_config_old" 
+    backintime_config_new = "./backintime_config_new" 
+    exclude_no_comments = "./exclude_no_comments"
+
+    if path.exists(backintime_config_root):
+        configfile = backintime_config_root
+    elif path.exists(backintime_config_old):
+        configfile = path.relpath(backintime_config_old) # backintime config file
+
+    excludefile = path.relpath("./exclude") # exclude file
+    profile = 1 # backintime profile
+
     parse_config(configfile)
