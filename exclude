@@ -27,6 +27,7 @@
 /var/tmp/*
 /var/log
 /tmp
+/usr/*
 lost+found/*
 
 /opt/google
